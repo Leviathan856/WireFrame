@@ -276,8 +276,7 @@ impl Parser {
                         if self.uri_buf.is_empty() {
                             return Err(ParseError::InvalidUri("empty URI".into()));
                         }
-                        self.uri =
-                            Some(String::from_utf8_lossy(&self.uri_buf).into_owned());
+                        self.uri = Some(String::from_utf8_lossy(&self.uri_buf).into_owned());
                         self.state = State::Version;
                     } else if byte > b' ' && byte != 0x7F {
                         if self.uri_buf.len() >= self.config.max_uri_len {
@@ -294,8 +293,7 @@ impl Parser {
 
                 State::Version => {
                     if byte == b'\r' {
-                        self.version =
-                            Some(HttpVersion::from_bytes(&self.version_buf)?);
+                        self.version = Some(HttpVersion::from_bytes(&self.version_buf)?);
                         self.state = State::VersionLf;
                     } else if byte >= b' ' && byte != 0x7F {
                         if self.version_buf.len() >= 16 {
@@ -348,8 +346,7 @@ impl Parser {
                         self.header_value_buf.clear();
                         self.state = State::HeaderValueOws;
                     } else if is_tchar(byte) {
-                        if self.header_name_buf.len() >= self.config.max_header_name_len
-                        {
+                        if self.header_name_buf.len() >= self.config.max_header_name_len {
                             return Err(ParseError::HeaderTooLarge);
                         }
                         self.header_name_buf.push(byte);
@@ -392,9 +389,7 @@ impl Parser {
                         self.store_current_header();
                         self.state = State::HeaderValueLf;
                     } else if is_field_content_byte(byte) {
-                        if self.header_value_buf.len()
-                            >= self.config.max_header_value_len
-                        {
+                        if self.header_value_buf.len() >= self.config.max_header_value_len {
                             return Err(ParseError::HeaderTooLarge);
                         }
                         self.header_value_buf.push(byte);
@@ -471,7 +466,6 @@ impl Parser {
                 }
 
                 // ChunkData is handled by the bulk-copy path above.
-
                 State::ChunkDataCr => {
                     if byte == b'\r' {
                         self.state = State::ChunkDataLf;
@@ -590,9 +584,10 @@ impl Parser {
         }
 
         if let Some(cl_str) = cl_values.first() {
-            let length: usize = cl_str.trim().parse().map_err(|_| {
-                ParseError::InvalidContentLength(cl_str.trim().to_string())
-            })?;
+            let length: usize = cl_str
+                .trim()
+                .parse()
+                .map_err(|_| ParseError::InvalidContentLength(cl_str.trim().to_string()))?;
 
             if length > self.config.max_body_size {
                 return Err(ParseError::BodyTooLarge);
@@ -621,9 +616,8 @@ impl Parser {
         }
 
         let size_str = String::from_utf8_lossy(&self.chunk_size_buf);
-        let size = usize::from_str_radix(size_str.trim(), 16).map_err(|_| {
-            ParseError::InvalidChunkSize(size_str.into_owned())
-        })?;
+        let size = usize::from_str_radix(size_str.trim(), 16)
+            .map_err(|_| ParseError::InvalidChunkSize(size_str.into_owned()))?;
 
         if self.body_buf.len() + size > self.config.max_body_size {
             return Err(ParseError::BodyTooLarge);

@@ -5,8 +5,7 @@ use std::process;
 use clap::{CommandFactory, Parser as ClapParser};
 
 use wireframe::{
-    format_debug, format_headers_only, format_json, parse_request_with_config,
-    ParserConfig,
+    ParserConfig, format_debug, format_headers_only, format_json, parse_request_with_config,
 };
 
 /// WireFrame CLI — strict HTTP/1.1 request parser.

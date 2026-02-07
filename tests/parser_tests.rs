@@ -1,7 +1,6 @@
 use wireframe::{
-    format_debug, format_headers_only, format_json, parse_request,
-    parse_request_with_config, HttpMethod, HttpVersion, ParseStatus, Parser,
-    ParserConfig,
+    HttpMethod, HttpVersion, ParseStatus, Parser, ParserConfig, format_debug, format_headers_only,
+    format_json, parse_request, parse_request_with_config,
 };
 
 // =========================================================================
@@ -28,10 +27,7 @@ fn get_with_query_string() {
     let req = parse_request(raw).expect("should parse");
     assert_eq!(req.method, HttpMethod::GET);
     assert_eq!(req.uri, "/api/users?page=1&limit=10");
-    assert_eq!(
-        req.header_value("Accept"),
-        Some("application/json")
-    );
+    assert_eq!(req.header_value("Accept"), Some("application/json"));
 }
 
 #[test]
@@ -57,8 +53,7 @@ fn all_standard_methods() {
 
     for (name, expected) in methods {
         let raw = format!("{name} / HTTP/1.1\r\nHost: h\r\n\r\n");
-        let req = parse_request(raw.as_bytes())
-            .unwrap_or_else(|e| panic!("method {name}: {e}"));
+        let req = parse_request(raw.as_bytes()).unwrap_or_else(|e| panic!("method {name}: {e}"));
         assert_eq!(req.method, expected, "mismatch for method {name}");
     }
 }
@@ -86,10 +81,7 @@ fn multiple_headers() {
     assert_eq!(req.headers.len(), 5);
     assert_eq!(req.header_value("Host"), Some("example.com"));
     assert_eq!(req.header_value("Accept"), Some("text/html"));
-    assert_eq!(
-        req.header_value("User-Agent"),
-        Some("WireFrame/1.0")
-    );
+    assert_eq!(req.header_value("User-Agent"), Some("WireFrame/1.0"));
 }
 
 #[test]
@@ -103,10 +95,7 @@ fn header_value_ows_is_trimmed() {
 fn header_value_with_interior_spaces() {
     let raw = b"GET / HTTP/1.1\r\nX-Custom: hello   world\r\n\r\n";
     let req = parse_request(raw).expect("should parse");
-    assert_eq!(
-        req.header_value("X-Custom"),
-        Some("hello   world")
-    );
+    assert_eq!(req.header_value("X-Custom"), Some("hello   world"));
 }
 
 #[test]
@@ -118,14 +107,10 @@ fn empty_header_value() {
 
 #[test]
 fn case_insensitive_header_lookup() {
-    let raw =
-        b"GET / HTTP/1.1\r\nhost: example.com\r\ncontent-type: text/plain\r\n\r\n";
+    let raw = b"GET / HTTP/1.1\r\nhost: example.com\r\ncontent-type: text/plain\r\n\r\n";
     let req = parse_request(raw).expect("should parse");
     assert_eq!(req.header_value("Host"), Some("example.com"));
-    assert_eq!(
-        req.header_value("CONTENT-TYPE"),
-        Some("text/plain")
-    );
+    assert_eq!(req.header_value("CONTENT-TYPE"), Some("text/plain"));
 }
 
 #[test]
@@ -161,8 +146,7 @@ fn post_with_content_length_body() {
 
 #[test]
 fn content_length_zero_yields_no_body() {
-    let raw =
-        b"POST /empty HTTP/1.1\r\nHost: h\r\nContent-Length: 0\r\n\r\n";
+    let raw = b"POST /empty HTTP/1.1\r\nHost: h\r\nContent-Length: 0\r\n\r\n";
     let req = parse_request(raw).expect("should parse");
     assert!(req.body.is_none());
 }
@@ -186,8 +170,7 @@ fn put_with_json_body() {
 
 #[test]
 fn duplicate_identical_content_lengths_accepted() {
-    let raw =
-        b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: 3\r\nContent-Length: 3\r\n\r\nabc";
+    let raw = b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: 3\r\nContent-Length: 3\r\n\r\nabc";
     let req = parse_request(raw).expect("should parse");
     assert_eq!(req.body_as_str(), Some("abc"));
 }
@@ -270,15 +253,11 @@ fn incremental_byte_by_byte() {
     let mut parser = Parser::new();
 
     for &byte in &raw[..raw.len() - 1] {
-        let status = parser
-            .feed(&[byte])
-            .expect("each byte should be ok");
+        let status = parser.feed(&[byte]).expect("each byte should be ok");
         assert_eq!(status, ParseStatus::Incomplete);
     }
 
-    let status = parser
-        .feed(&[raw[raw.len() - 1]])
-        .expect("last byte");
+    let status = parser.feed(&[raw[raw.len() - 1]]).expect("last byte");
     assert!(matches!(status, ParseStatus::Complete(_)));
 
     let req = parser.finish().expect("should finish");
@@ -414,29 +393,25 @@ fn error_incomplete_request_no_end() {
 
 #[test]
 fn error_incomplete_body() {
-    let raw =
-        b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: 100\r\n\r\nshort";
+    let raw = b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: 100\r\n\r\nshort";
     assert!(parse_request(raw).is_err());
 }
 
 #[test]
 fn error_differing_content_lengths() {
-    let raw =
-        b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: 3\r\nContent-Length: 5\r\n\r\nabc";
+    let raw = b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: 3\r\nContent-Length: 5\r\n\r\nabc";
     assert!(parse_request(raw).is_err());
 }
 
 #[test]
 fn error_negative_content_length() {
-    let raw =
-        b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: -1\r\n\r\n";
+    let raw = b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: -1\r\n\r\n";
     assert!(parse_request(raw).is_err());
 }
 
 #[test]
 fn error_non_numeric_content_length() {
-    let raw =
-        b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: abc\r\n\r\n";
+    let raw = b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: abc\r\n\r\n";
     assert!(parse_request(raw).is_err());
 }
 
@@ -467,8 +442,7 @@ fn config_max_headers_count_enforced() {
         max_headers_count: 2,
         ..ParserConfig::default()
     };
-    let raw =
-        b"GET / HTTP/1.1\r\nH1: a\r\nH2: b\r\nH3: c\r\n\r\n";
+    let raw = b"GET / HTTP/1.1\r\nH1: a\r\nH2: b\r\nH3: c\r\n\r\n";
     assert!(parse_request_with_config(raw, config).is_err());
 }
 
@@ -488,8 +462,7 @@ fn config_max_header_name_len_enforced() {
         max_header_name_len: 4,
         ..ParserConfig::default()
     };
-    let raw =
-        b"GET / HTTP/1.1\r\nVeryLongHeaderName: v\r\n\r\n";
+    let raw = b"GET / HTTP/1.1\r\nVeryLongHeaderName: v\r\n\r\n";
     assert!(parse_request_with_config(raw, config).is_err());
 }
 
@@ -499,8 +472,7 @@ fn config_max_header_value_len_enforced() {
         max_header_value_len: 3,
         ..ParserConfig::default()
     };
-    let raw =
-        b"GET / HTTP/1.1\r\nHost: very-long-value\r\n\r\n";
+    let raw = b"GET / HTTP/1.1\r\nHost: very-long-value\r\n\r\n";
     assert!(parse_request_with_config(raw, config).is_err());
 }
 
@@ -525,10 +497,7 @@ fn config_chunked_body_too_large() {
 fn body_as_lossy_string() {
     let raw = b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: 3\r\n\r\nabc";
     let req = parse_request(raw).unwrap();
-    assert_eq!(
-        req.body_as_lossy_string(),
-        Some("abc".to_string())
-    );
+    assert_eq!(req.body_as_lossy_string(), Some("abc".to_string()));
 }
 
 #[test]
@@ -581,8 +550,7 @@ fn json_output_pretty() {
 
 #[test]
 fn json_output_with_body() {
-    let raw =
-        b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: 4\r\n\r\ndata";
+    let raw = b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: 4\r\n\r\ndata";
     let req = parse_request(raw).unwrap();
     let json = format_json(&req, false);
     assert!(json.contains("\"body\":\"data\""));
@@ -603,8 +571,7 @@ fn debug_output_contains_sections() {
 
 #[test]
 fn headers_only_output() {
-    let raw =
-        b"GET /path HTTP/1.1\r\nHost: example.com\r\nAccept: */*\r\n\r\n";
+    let raw = b"GET /path HTTP/1.1\r\nHost: example.com\r\nAccept: */*\r\n\r\n";
     let req = parse_request(raw).unwrap();
     let out = format_headers_only(&req);
     assert!(out.starts_with("GET /path HTTP/1.1\n"));

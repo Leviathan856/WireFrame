@@ -5,11 +5,9 @@ use crate::types::HttpRequest;
 /// When `pretty` is `true` the output is indented for readability.
 pub fn format_json(request: &HttpRequest, pretty: bool) -> String {
     if pretty {
-        serde_json::to_string_pretty(request)
-            .unwrap_or_else(|e| format!("{{\"error\": \"{e}\"}}"))
+        serde_json::to_string_pretty(request).unwrap_or_else(|e| format!("{{\"error\": \"{e}\"}}"))
     } else {
-        serde_json::to_string(request)
-            .unwrap_or_else(|e| format!("{{\"error\": \"{e}\"}}"))
+        serde_json::to_string(request).unwrap_or_else(|e| format!("{{\"error\": \"{e}\"}}"))
     }
 }
 
@@ -22,10 +20,7 @@ pub fn format_debug(request: &HttpRequest) -> String {
     out.push_str(&format!("URI:     {}\n", request.uri));
     out.push_str(&format!("Version: {}\n", request.version));
 
-    out.push_str(&format!(
-        "\n--- Headers ({}) ---\n",
-        request.headers.len()
-    ));
+    out.push_str(&format!("\n--- Headers ({}) ---\n", request.headers.len()));
     for header in &request.headers {
         out.push_str(&format!("  {}: {}\n", header.name, header.value));
     }
@@ -52,8 +47,7 @@ pub fn format_debug(request: &HttpRequest) -> String {
 
 /// Render only the request line and headers (no body).
 pub fn format_headers_only(request: &HttpRequest) -> String {
-    let mut out =
-        String::with_capacity(64 + request.headers.len() * 40);
+    let mut out = String::with_capacity(64 + request.headers.len() * 40);
 
     out.push_str(&format!(
         "{} {} {}\n",
