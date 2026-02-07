@@ -120,3 +120,75 @@ jobs:
           name: ${{ matrix.asset_name }}
           path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
           if-no-files-found: error
+
+  # -----------------------------------------------------------------------
+  # Create GitHub Release with artifacts (main branch only)
+  # -----------------------------------------------------------------------
+  release:
+    name: Create Release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for tag detection
+
+      - name: Determine next version
+        id: version
+        run: |
+          # Fetch all tags
+          git fetch --tags
+          
+          # Get the latest version tag (format: v1.0.0)
+          LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -1)
+          
+          if [ -z "$LATEST_TAG" ]; then
+            # No tags yet, start at v1.0.0
+            NEW_TAG="v1.0.0"
+          else
+            # Extract version components
+            VERSION=${LATEST_TAG#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+            
+            # Increment patch version
+            PATCH=$((PATCH + 1))
+            NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+          
+          echo "tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
+          echo "Next version: $NEW_TAG"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          body: |
+            ## WireFrame ${{ steps.version.outputs.tag }}
+            
+            Automated release of WireFrame HTTP/1.1 parser and CLI tool.
+            
+            ### Downloads
+            
+            Download the pre-built CLI binary for your platform:
+            - **Linux x86-64**: `wireframe-cli-linux-amd64`
+            - **Linux ARM64**: `wireframe-cli-linux-arm64`
+            - **macOS x86-64**: `wireframe-cli-macos-amd64`
+            - **macOS ARM64** (Apple Silicon): `wireframe-cli-macos-arm64`
+            - **Windows x86-64**: `wireframe-cli-windows-amd64.exe`
+            
+            ### Changes
+            
+            See commit history for detailed changes in this release.
+          files: |
+            artifacts/**/*
+          draft: false
+          prerelease: false

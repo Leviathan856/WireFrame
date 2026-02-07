@@ -186,6 +186,20 @@ The repository ships with a ready-to-use GitHub Actions workflow at
 | **Lint** | `ubuntu-latest` | `cargo fmt --check` + `cargo clippy -D warnings` |
 | **Test** | `ubuntu-latest`, `macos-latest`, `windows-latest` | `cargo test --all-targets` + doc-tests on every OS |
 | **Build** | per-target (see below) | Release-optimised binary, uploaded as artifact |
+| **Release** | `ubuntu-latest` (main branch only) | Auto-increment version tag, create GitHub Release with all artifacts |
+
+### Automated releases
+
+On every push to `main`, after all tests and builds complete successfully,
+the workflow automatically:
+
+1. **Determines the next version** — fetches the latest `v*.*.*` tag, increments
+   the patch version (e.g., `v1.0.0` → `v1.0.1`), or starts at `v1.0.0` if no
+   tags exist.
+2. **Creates a GitHub Release** — tags the commit, publishes a release with
+   release notes, and attaches all five pre-built binaries.
+
+Download binaries directly from the [Releases](../../releases) page.
 
 ### Release artifacts
 
@@ -199,8 +213,9 @@ The **Build** job produces pre-compiled CLI binaries for **five targets**:
 | `wireframe-cli-macos-arm64` | `aarch64-apple-darwin` | macOS Apple Silicon |
 | `wireframe-cli-windows-amd64.exe` | `x86_64-pc-windows-msvc` | Windows x86-64 |
 
-Artifacts are downloadable from the **Actions → workflow run → Artifacts**
-section in GitHub. The build job only runs after lint and tests pass.
+On pull requests, artifacts are available from the **Actions → workflow run →
+Artifacts** section. On pushes to `main`, they are also attached to the
+automatically-created GitHub Release.
 
 ### Caching
 
