@@ -1,0 +1,23 @@
+[package]
+name = "wireframe"
+version = "0.1.0"
+edition = "2024"
+description = "MicroGate server core: strict streaming HTTP/1.1 parser and CLI tool"
+license = "MIT"
+keywords = ["http", "parser", "rfc9112", "streaming"]
+categories = ["network-programming", "parser-implementations"]
+
+[lib]
+name = "wireframe"
+path = "src/lib.rs"
+
+[[bin]]
+name = "wireframe-cli"
+path = "src/bin/cli.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4", features = ["derive"] }
+
+[dev-dependencies]
