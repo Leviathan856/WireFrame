@@ -141,10 +141,10 @@ jobs:
         run: |
           # Fetch all tags
           git fetch --tags
-          
+
           # Get the latest version tag (format: v1.0.0)
           LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -1)
-          
+
           if [ -z "$LATEST_TAG" ]; then
             # No tags yet, start at v1.0.0
             NEW_TAG="v1.0.0"
@@ -152,12 +152,12 @@ jobs:
             # Extract version components
             VERSION=${LATEST_TAG#v}
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-            
+
             # Increment patch version
             PATCH=$((PATCH + 1))
             NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
           fi
-          
+
           echo "tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
           echo "Next version: $NEW_TAG"
 
@@ -166,6 +166,17 @@ jobs:
         with:
           path: artifacts
 
+      - name: Prepare release binaries
+        run: |
+          mkdir -p release-binaries
+          cp artifacts/wireframe-cli-linux-amd64/wireframe-cli release-binaries/wireframe-cli-linux-amd64
+          cp artifacts/wireframe-cli-linux-arm64/wireframe-cli release-binaries/wireframe-cli-linux-arm64
+          cp artifacts/wireframe-cli-macos-amd64/wireframe-cli release-binaries/wireframe-cli-macos-amd64
+          cp artifacts/wireframe-cli-macos-arm64/wireframe-cli release-binaries/wireframe-cli-macos-arm64
+          cp artifacts/wireframe-cli-windows-amd64.exe/wireframe-cli.exe release-binaries/wireframe-cli-windows-amd64.exe
+          chmod +x release-binaries/wireframe-cli-*
+          ls -lh release-binaries/
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -173,22 +184,22 @@ jobs:
           name: Release ${{ steps.version.outputs.tag }}
           body: |
             ## WireFrame ${{ steps.version.outputs.tag }}
-            
+
             Automated release of WireFrame HTTP/1.1 parser and CLI tool.
-            
+
             ### Downloads
-            
+
             Download the pre-built CLI binary for your platform:
             - **Linux x86-64**: `wireframe-cli-linux-amd64`
             - **Linux ARM64**: `wireframe-cli-linux-arm64`
             - **macOS x86-64**: `wireframe-cli-macos-amd64`
             - **macOS ARM64** (Apple Silicon): `wireframe-cli-macos-arm64`
             - **Windows x86-64**: `wireframe-cli-windows-amd64.exe`
-            
+
             ### Changes
-            
+
             See commit history for detailed changes in this release.
           files: |
-            artifacts/**/*
+            release-binaries/*
           draft: false
           prerelease: false
